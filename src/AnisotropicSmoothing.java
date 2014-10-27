@@ -1,3 +1,5 @@
+import java.io.IOException;
+
 /**
  * Created by joe on 25/10/14.
  */
@@ -22,10 +24,21 @@ public class AnisotropicSmoothing {
     }
 
     public AnisotropicSmoothing(String path, double sigma){
-        double[][] kernel = KernelGenerator.get2DGaussianKernel((int)sigma);
+        double[][] twoDkernel = KernelGenerator.get2DGaussianKernel((int)sigma);
         Image image = new Image();
         image.ReadPGM(path);
-        Convolution.convolve(image, kernel);
+//        Image twoDconvolved = Convolution.convolve(image, twoDkernel);
+//        twoDconvolved.WritePGM("isotropic.pgm");
+
+        double verticalKernel[][] = KernelGenerator.getVerticalKernel((int)sigma);
+        Image verticalConvolved = Convolution.convolve(image, verticalKernel);
+        verticalConvolved.WritePGM("vertical.pgm");
+
+//        try {
+//            Runtime.getRuntime().exec("open convolved.pgm");
+//        }catch(IOException e){
+//
+//        }
     }
 
     public AnisotropicSmoothing(String path, double sigma, String clean){

@@ -10,7 +10,7 @@ public class KernelGenerator {
         for(int y = 0; y < height; y++) {
             for(int x = 0; x < width; x++){
                 double distCenter = Math.sqrt( Math.pow((width/2 - x),2) + Math.pow((height/2 - y),2)); //normalise X and Y values around origin, compute distance
-                kernel[y][x] = gaussianFunction(distCenter, sigma);
+                kernel[x][y] = gaussianFunction(distCenter, sigma);
             }
         }
 
@@ -39,6 +39,11 @@ public class KernelGenerator {
     public static double[][] get2DGaussianKernel(int sigma){
         int kernelLength = 3*sigma;
         return getGaussianKernel(kernelLength, kernelLength, sigma);
+    }
+
+    public static double[][] getVerticalKernel(int sigma){
+        int kernelHeight = 3*sigma;
+        return getGaussianKernel(kernelHeight, 1, sigma);
     }
 
     private static double gaussianFunction(double x, double sigma){
