@@ -24,15 +24,21 @@ public class AnisotropicSmoothing {
     }
 
     public AnisotropicSmoothing(String path, double sigma){
-        double[][] twoDkernel = KernelGenerator.get2DGaussianKernel((int)sigma);
         Image image = new Image();
         image.ReadPGM(path);
-//        Image twoDconvolved = Convolution.convolve(image, twoDkernel);
-//        twoDconvolved.WritePGM("isotropic.pgm");
 
-        double verticalKernel[][] = KernelGenerator.getVerticalKernel((int)sigma);
-        Image verticalConvolved = Convolution.convolve(image, verticalKernel);
-        verticalConvolved.WritePGM("vertical.pgm");
+        double[][] twoDkernel = KernelGenerator.get2DGaussianKernel((int)sigma);
+        Image twoDconvolved = Convolution.convolve(image, twoDkernel);
+        twoDconvolved.WritePGM("isotropic.pgm");
+
+//        double verticalKernel[][] = KernelGenerator.getVerticalKernel((int)sigma);
+//        Image verticalConvolved = Convolution.convolve(image, verticalKernel);
+//        verticalConvolved.WritePGM("vertical.pgm");
+//
+//        double horizontalKernel[][] = KernelGenerator.getHorizontalKernel((int)sigma);
+//        Image horizontalConvolved = Convolution.convolve(image, horizontalKernel);
+//        horizontalConvolved.WritePGM("horizontal.pgm");
+
 
 //        try {
 //            Runtime.getRuntime().exec("open convolved.pgm");

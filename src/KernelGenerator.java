@@ -37,13 +37,19 @@ public class KernelGenerator {
     }
 
     public static double[][] get2DGaussianKernel(int sigma){
-        int kernelLength = 3*sigma;
+        int kernelLength = 6*sigma + 1;
         return getGaussianKernel(kernelLength, kernelLength, sigma);
     }
 
     public static double[][] getVerticalKernel(int sigma){
-        int kernelHeight = 3*sigma;
+        int kernelHeight = 6*sigma + 1;
         return getGaussianKernel(kernelHeight, 1, sigma);
+    }
+
+
+    public static double[][] getHorizontalKernel(int sigma){
+        int kernelWidth = 6*sigma + 1;
+        return getGaussianKernel(1, kernelWidth, sigma);
     }
 
     private static double gaussianFunction(double x, double sigma){
