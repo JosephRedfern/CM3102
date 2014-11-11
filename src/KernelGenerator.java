@@ -14,26 +14,55 @@ public class KernelGenerator {
             }
         }
 
-        //Need sum of kernel in order to normalise so tha sum == 1.
-        //TODO: Could probably do this some fancy way that doesn't require re-summing...
+        return normalise(kernel, 1);
+    }
+
+    private static double[][] normalise(double[][] input, int target){
+        //find sum
         double sum = 0;
 
-        for(int y = 0; y < kernel.length; y++) {
-            for (int x = 0; x < kernel[y].length; x++){
-                sum += kernel[y][x];
+        for(int x = 0; x<input.length; x++){
+            for(int y = 0; y<input[0].length; y++){
+                sum+=input[x][y];
             }
         }
 
-        //After finding sum of the kernel, multiply every value by its reciprocal of sum to normalise
-        double normalisationConstant = 1/sum;
+        double multiplier = target/sum;
 
-        for(int y=0; y<kernel.length; y++){
-            for(int x=0; x<kernel[y].length; x++){
-                kernel[y][x] *= normalisationConstant;
+        for(int x = 0; x < input.length; x++){
+            for(int y = 0; y < input[0].length; y++){
+                input[x][y] *= multiplier;
             }
         }
 
-        return kernel;
+        return input;
+
+    }
+
+    public static double[][] getBackwardDiagonal(int sigma){
+        int length =  1 + (sigma * 6);
+        double[][] kernel = new double[length][length];
+
+        for(int i = 0; i < length; i++){
+
+            double distCenter = Math.sqrt( Math.pow((length/2 - i),2) + Math.pow((length/2 - i),2)); //normalise X and Y values around origin, compute distance
+            kernel[i][i] = gaussianFunction(distCenter, sigma);
+        }
+
+        return normalise(kernel, 1);
+    }
+
+    public static double[][] getForwardDiagonal(int sigma){
+        int length =  1 + (sigma * 6);
+        double[][] kernel = new double[length][length];
+
+        for(int i = 0; i < length; i++){
+
+            double distCenter = Math.sqrt( Math.pow((length/2 - i),2) + Math.pow((length/2 - i),2)); //normalise X and Y values around origin, compute distance
+            kernel[i][length-i-1] = gaussianFunction(distCenter, sigma);
+        }
+
+        return normalise(kernel, 1);
     }
 
     public static double[][] get2DGaussianKernel(int sigma){
@@ -52,7 +81,7 @@ public class KernelGenerator {
         return getGaussianKernel(1, kernelWidth, sigma);
     }
 
-    private static double gaussianFunction(double x, double sigma){
+    public static double gaussianFunction(double x, double sigma){
         double a = 1/(sigma * Math.sqrt(2 * Math.PI));
         double b = 0; //μ, expected value = 0?
         double c = sigma;

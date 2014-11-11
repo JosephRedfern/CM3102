@@ -27,24 +27,49 @@ public class AnisotropicSmoothing {
         Image image = new Image();
         image.ReadPGM(path);
 
+//        Image sdInput = StandardDeviation.getStandardDeviation(image, (int)sigma);
+//        sdInput.WritePGM("sdInput.pgm");
+
+        double verticalKernel[][] = KernelGenerator.getVerticalKernel((int)sigma);
+        Image verticalConvolved = Convolution.convolve(image, verticalKernel);
+        verticalConvolved.WritePGM("vertical.pgm");
+        System.out.println("Convolved, SD-ing...");
+        StandardDeviation.getStandardDeviation(verticalConvolved, (int)sigma).WritePGM("verticalSD.pgm");
+
+        double horizontalKernel[][] = KernelGenerator.getHorizontalKernel((int)sigma);
+        Image horizontalConvolved = Convolution.convolve(image, horizontalKernel);
+        horizontalConvolved.WritePGM("horizontal.pgm");
+        System.out.println("Convolved, SD-ing...");
+        StandardDeviation.getStandardDeviation(horizontalConvolved, (int)sigma).WritePGM("hortizontalSD.pgm");
+
         double[][] twoDkernel = KernelGenerator.get2DGaussianKernel((int)sigma);
         Image twoDconvolved = Convolution.convolve(image, twoDkernel);
         twoDconvolved.WritePGM("isotropic.pgm");
-
-//        double verticalKernel[][] = KernelGenerator.getVerticalKernel((int)sigma);
-//        Image verticalConvolved = Convolution.convolve(image, verticalKernel);
-//        verticalConvolved.WritePGM("vertical.pgm");
-//
-//        double horizontalKernel[][] = KernelGenerator.getHorizontalKernel((int)sigma);
-//        Image horizontalConvolved = Convolution.convolve(image, horizontalKernel);
-//        horizontalConvolved.WritePGM("horizontal.pgm");
+        System.out.println("Convolved, SD-ing...");
+        StandardDeviation.getStandardDeviation(twoDconvolved, (int)sigma).WritePGM("isotropicSD.pgm");
 
 
-//        try {
-//            Runtime.getRuntime().exec("open convolved.pgm");
-//        }catch(IOException e){
-//
-//        }
+        double[][] fdKernel = KernelGenerator.getForwardDiagonal((int) sigma);
+        Image fdConvolved = Convolution.convolve(image, fdKernel);
+        fdConvolved.WritePGM("diagonalF.pgm");
+        System.out.println("Convolved, SD-ing...");
+        StandardDeviation.getStandardDeviation(fdConvolved, (int)sigma).WritePGM("diagonalFSD.pgm");
+
+        double[][] bdKernel = KernelGenerator.getBackwardDiagonal((int) sigma);
+        Image bdConvolved = Convolution.convolve(image, bdKernel);
+        bdConvolved.WritePGM("diagonalR.pgm");
+        System.out.println("Convolved, SD-ing...");
+        StandardDeviation.getStandardDeviation(bdConvolved, (int)sigma).WritePGM("diagonalRSD.pgm");
+
+
+        try {
+//            Runtime.getRuntime().exec("open vertical.pgm");
+//            Runtime.getRuntime().exec("open horizontal.pgm");
+//            Runtime.getRuntime().exec("open isotropic.pgm");
+            Runtime.getRuntime().exec("open sdInput.pgm");
+        }catch(IOException e){
+
+        }
     }
 
     public AnisotropicSmoothing(String path, double sigma, String clean){
