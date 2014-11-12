@@ -1,9 +1,11 @@
 import java.util.Arrays;
 
 /**
- * Created by joe on 25/10/14.
+ * Created by 1106886 on 25/10/14.
  */
 public class KernelGenerator {
+
+    //Generate a gaussian kernel given a height and width - for straight line (non-diagonal) kernels.
     public static double[][] getGaussianKernel(int width, int height, double sigma){
         double[][] kernel = new double[width][height];
 
@@ -17,6 +19,7 @@ public class KernelGenerator {
         return normalise(kernel, 1);
     }
 
+    //Normalise a gaussian kernel such that it sums to 1.
     private static double[][] normalise(double[][] input, int target){
         //find sum
         double sum = 0;
@@ -65,6 +68,8 @@ public class KernelGenerator {
         return normalise(kernel, 1);
     }
 
+
+    //No longer used.
     public static double[][] get2DGaussianKernel(int sigma){
         int kernelLength = 6*sigma + 1;
         return getGaussianKernel(kernelLength, kernelLength, sigma);
@@ -81,6 +86,8 @@ public class KernelGenerator {
         return getGaussianKernel(1, kernelWidth, sigma);
     }
 
+
+    //using formula taken from http://en.wikipedia.org/wiki/Gaussian_function
     public static double gaussianFunction(double x, double sigma){
         double a = 1/(sigma * Math.sqrt(2 * Math.PI));
         double b = 0; //μ, expected value = 0?

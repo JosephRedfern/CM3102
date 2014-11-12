@@ -1,11 +1,11 @@
 /**
- * Created by joe on 26/10/14.
+ * Created by 1106886 on 26/10/14.
  */
 public class Convolution {
 
-    public static Image convolve(Image input, double[][] kernel, boolean savePadded){
-        System.out.println("Performing convolution...");
 
+    //performs convolution given a kernel and an imput image.
+    public static Image convolve(Image input, double[][] kernel, boolean savePadded){
         Image paddedImage;
 
         if(!savePadded) {
@@ -28,8 +28,6 @@ public class Convolution {
                     }
                 }
 
-//                System.out.println(convolvedValue);
-
                 convolvedImage.pixels[x][y] = (int)convolvedValue;
             }
         }
@@ -41,6 +39,7 @@ public class Convolution {
         return convolve(input, kernel, false);
     }
 
+    //pad an image to make it suitable for convolution given a kernel width and height.
     public static Image padBoundary(Image input, int kernelHeight, int kernelWidth){
         Image output = new Image(input.depth, input.width + kernelWidth - 1, input.height + kernelHeight - 1);
 
@@ -63,6 +62,7 @@ public class Convolution {
             }
         }
 
+        //Pad sides.
         for(int y = 0; y < output.height; y++){
 
             for(int i = 0; i < (kernelWidth-1)/2; i++){
@@ -70,7 +70,6 @@ public class Convolution {
             }
 
             for(int i = 0; i < (kernelWidth-1)/2; i++){
-//                output.pixels[input.width+i][y] = output.pixels[(output.width-1)-i][y];
                 output.pixels[input.width + (kernelWidth-1)/2 + i][y] = output.pixels[input.width+((kernelWidth-1)/2) - 1 - i][y];
             }
         }
@@ -78,6 +77,7 @@ public class Convolution {
         return output;
     }
 
+    //Allow saving of padded image.
     public static Image padBoundary(Image input, int kernelHeight, int kernelWidth, String fileName){
         Image padded = padBoundary(input, kernelHeight, kernelWidth);
 

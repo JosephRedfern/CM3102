@@ -1,7 +1,18 @@
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
- * Created by joe on 25/10/14.
+ *
+ * Notes:
+ * • I couldn't get Standard Deviation calculation for an isotropic image to work quickly. Uncomment the 3 lines after
+ *   line 57 to attempt it.
+ * • I was unsure of the Mutual Information calculation, and ran out of time.
+ * • The standard deviation calculation isn't perfect, seems much darker compared to your results. This, combined with
+ *   the (by default) lack of an SD map for the Isotropic image makes the combined image seem odd. However, I believe
+ *   the method used to calculate the combined image to be correct.
+ *
+ * Created by 1106886 on 25/10/14.
  */
 public class AnisotropicSmoothing {
 
@@ -9,8 +20,6 @@ public class AnisotropicSmoothing {
         if(args.length >= 2) {
             String path = args[0];
             Double sigma = Double.parseDouble(args[1]);
-
-            System.out.printf("Running with Sigma = %s%n", sigma);
 
             if(args.length >= 3){
                 String clean = args[2];
@@ -27,45 +36,57 @@ public class AnisotropicSmoothing {
         Image image = new Image();
         image.ReadPGM(path);
 
-//        Image sdInput = StandardDeviation.getStandardDeviation(image, (int)sigma);
-//        sdInput.WritePGM("sdInput.pgm");
+        //SD image -> filtered image mapping for combining.
+        HashMap<Image, Image> mappings = new HashMap<Image, Image>();
+
 
         double verticalKernel[][] = KernelGenerator.getVerticalKernel((int)sigma);
         Image verticalConvolved = Convolution.convolve(image, verticalKernel);
         verticalConvolved.WritePGM("vertical.pgm");
-        System.out.println("Convolved, SD-ing...");
-        StandardDeviation.getVerticalStandardDeviation(verticalConvolved, (int)sigma).WritePGM("verticalSD.pgm");
-//
+        Image verticalSD = StandardDeviation.getVerticalStandardDeviation(verticalConvolved, (int) sigma);
+        verticalSD.WritePGM("verticalSD.pgm");
+        mappings.put(verticalSD, verticalConvolved);
+
         double horizontalKernel[][] = KernelGenerator.getHorizontalKernel((int)sigma);
         Image horizontalConvolved = Convolution.convolve(image, horizontalKernel);
         horizontalConvolved.WritePGM("horizontal.pgm");
-        System.out.println("Convolved, SD-ing...");
-        StandardDeviation.getHorizontalStandardDeviation(horizontalConvolved, (int)sigma).WritePGM("horizontalSD.pgm");
+        Image horizontalSD = StandardDeviation.getHorizontalStandardDeviation(horizontalConvolved, (int)sigma);
+        horizontalSD.WritePGM("horizontalSD.pgm");
+        mappings.put(horizontalSD, horizontalConvolved);
 
-        double[][] twoDkernel = KernelGenerator.get2DGaussianKernel((int)sigma);
-        Image twoDconvolved = Convolution.convolve(image, twoDkernel, true);
-        twoDconvolved.WritePGM("isotropic.pgm");
-//        System.out.println("Convolved, SD-ing...");
-//        StandardDeviation.getStandardDeviation(twoDconvolved, (int)sigma).WritePGM("isotropicSD.pgm");
-//
-//
+
+        Image isotropicConvolved = Convolution.convolve(verticalConvolved, horizontalKernel);
+        isotropicConvolved.WritePGM("isotropic.pgm");
+//        UNCOMMENT THE BELOW 3 LINES TO ATTEMPT CALCULATION OF SD FOR ISOTROPIC IMAGE - SLOW PROCESS.
+        
+//        Image isotropicSD = StandardDeviation.getIsotropicStandardDeviation(isotropicConvolved, (int)sigma);
+//        isotropicSD.WritePGM("isotropicSD.pgm");
+//        mappings.put(isotropicSD, isotropicConvolved);
+
+
         double[][] fdKernel = KernelGenerator.getForwardDiagonal((int) sigma);
         Image fdConvolved = Convolution.convolve(image, fdKernel);
         fdConvolved.WritePGM("diagonalF.pgm");
-        System.out.println("Convolved, SD-ing...");
-        StandardDeviation.getForwardDiagonalStandardDeviation(fdConvolved, (int)sigma).WritePGM("diagonalFSD.pgm");
-//
+        Image diagonalFSD = StandardDeviation.getForwardDiagonalStandardDeviation(fdConvolved, (int)sigma);
+        diagonalFSD.WritePGM("diagonalFSD.pgm");
+        mappings.put(diagonalFSD, fdConvolved);
+
         double[][] bdKernel = KernelGenerator.getBackwardDiagonal((int) sigma);
         Image bdConvolved = Convolution.convolve(image, bdKernel);
         bdConvolved.WritePGM("diagonalR.pgm");
-        System.out.println("Convolved, SD-ing...");
-        StandardDeviation.getBackwardDiagonalStandardDeviation(bdConvolved, (int)sigma).WritePGM("diagonalRSD.pgm");
+        Image diagonalRSD = StandardDeviation.getBackwardDiagonalStandardDeviation(bdConvolved, (int)sigma);
+        diagonalRSD.WritePGM("diagonalRSD.pgm");
+        mappings.put(diagonalRSD, bdConvolved);
 
+        Image combined = combine(mappings, image.depth, image.width, image.height);
+        combined.WritePGM("combined.pgm");
 
-        try {
+//        try {
 //            Runtime.getRuntime().exec("open vertical.pgm");
 //            Thread.sleep(100);
 //            Runtime.getRuntime().exec("open verticalSD.pgm");
+//            Thread.sleep(100);
+//            Runtime.getRuntime().exec("open combined.pgm");
 //            Thread.sleep(100);
 //            Runtime.getRuntime().exec("open horizontal.pgm");
 //            Thread.sleep(100);
@@ -74,17 +95,78 @@ public class AnisotropicSmoothing {
 //            Runtime.getRuntime().exec("open diagonalR.pgm");
 //            Thread.sleep(100);
 //            Runtime.getRuntime().exec("open diagonalRSD.pgm");
+//            Thread.sleep(100);
 //            Runtime.getRuntime().exec("open reflected.pgm");
 //            Thread.sleep(50);
 //            Runtime.getRuntime().exec("open isotropic.pgm");
-//            Runtime.getRuntime().exec("open sdIsotropic.pgm");
-        }catch(Exception e){
-
-        }
+//            Thread.sleep(100);
+//            Runtime.getRuntime().exec("open isotropic2.pgm");
+//            Thread.sleep(100);
+//            Runtime.getRuntime().exec("open isotropicSD.pgm");
+//        }catch(Exception e){
+//
+//        }
     }
 
-    public AnisotropicSmoothing(String path, double sigma, String clean){
+    //perform image combining based in smallest
+    public static Image combine(HashMap<Image, Image> imageSDMap, int depth, int width, int height){
+        Image combined = new Image(depth, width, height);
 
+        for(int y = 0; y < height; y++){
+            for(int x = 0; x < width; x++){
+                int minSDVal = 256;
+                int pixVal = 0;
+
+                for(Map.Entry<Image, Image> entry : imageSDMap.entrySet()){
+                    Image sdImage = entry.getKey();
+                    Image image = entry.getValue();
+
+                    if(sdImage.pixels[x][y] <= minSDVal){
+                        pixVal = image.pixels[x][y];
+                    }
+                }
+
+                combined.pixels[x][y] = pixVal;
+
+            }
+        }
+
+        return combined;
+    }
+
+    //Perform results analysis.
+    public AnisotropicSmoothing(String path, double sigma, String cleanPath){
+        this(path, sigma);
+
+        Image input = new Image();
+        input.ReadPGM(path);
+
+        Image result = new Image(); //sub-optimal.
+        result.ReadPGM("combined.pgm");
+
+        Image clean = new Image();
+        clean.ReadPGM(cleanPath);
+
+        double inputRMSE = getRMSE(input, clean);
+        System.out.printf("input image RMSE = %s%n", inputRMSE);
+        System.out.printf("input image MI = %s%n", inputRMSE); //Unsure of MI calculation...
+
+        double resultRMSE = getRMSE(input, result);
+        System.out.printf("result\t RMSE = %s%n", resultRMSE);
+        System.out.printf("result\t image MI = %s%n", resultRMSE);
+    }
+
+    //Get RMSE between two images
+    private double getRMSE(Image image1, Image image2){
+        long error = 0;
+
+        for(int y = 0; y < image1.height; y++){
+            for(int x = 0; x < image1.width; x++){
+                error += Math.pow((double)(image1.pixels[x][y] - image2.pixels[x][y]), 2);
+            }
+        }
+
+        return Math.sqrt(error/(image1.width * image1.height));
     }
 
 }
