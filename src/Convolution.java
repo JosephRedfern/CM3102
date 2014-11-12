@@ -3,9 +3,16 @@
  */
 public class Convolution {
 
-    public static Image convolve(Image input, double[][] kernel){
-        System.out.println("Performing convolution...") ;
-        Image paddedImage = padBoundary(input, kernel.length, kernel[0].length);
+    public static Image convolve(Image input, double[][] kernel, boolean savePadded){
+        System.out.println("Performing convolution...");
+
+        Image paddedImage;
+
+        if(!savePadded) {
+            paddedImage = padBoundary(input, kernel.length, kernel[0].length);
+        }else{
+            paddedImage = padBoundary(input, kernel.length, kernel[0].length, "reflected.pgm");
+        }
         Image convolvedImage = new Image(input.depth, input.width, input.height);
 
         for(int y = 0; y < input.height; y++){
@@ -30,7 +37,9 @@ public class Convolution {
         return convolvedImage;
     }
 
-
+    public static Image convolve(Image input, double[][] kernel){
+        return convolve(input, kernel, false);
+    }
 
     public static Image padBoundary(Image input, int kernelHeight, int kernelWidth){
         Image output = new Image(input.depth, input.width + kernelWidth - 1, input.height + kernelHeight - 1);
@@ -66,12 +75,16 @@ public class Convolution {
             }
         }
 
-        output.WritePGM("reflected.pgm");
-//        try {
-//            Runtime.getRuntime().exec("open padded.pgm");
-//        }catch(java.io.IOException e){
-//
-//        }
         return output;
+    }
+
+    public static Image padBoundary(Image input, int kernelHeight, int kernelWidth, String fileName){
+        Image padded = padBoundary(input, kernelHeight, kernelWidth);
+
+        if(fileName.length()>0){
+            padded.WritePGM(fileName);
+        }
+
+        return padded;
     }
 }
