@@ -8,7 +8,7 @@ public class StandardDeviation {
 
         for(int y = sigma*3; y <paddedImage.height - sigma*3; y++){
             for(int x = sigma*3; x < paddedImage.width - sigma*3; x++){
-                double xbar = getWeightedAverage(paddedImage, sigma, x, y);
+                double xbar = getWeightedAverage(paddedImage, sigma, x, y) /  (sigma*3*sigma*3);
                 double runningTotal = 0;
 
                 for(int yk = -3 * sigma; yk < 3 * sigma; yk++){
