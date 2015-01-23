@@ -1,4 +1,5 @@
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -7,7 +8,8 @@ import java.util.Map;
  * Notes:
  * • I couldn't get Standard Deviation calculation for an isotropic image to work quickly. Uncomment the 3 lines after
  *   line 57 to attempt it.
- * • I was unsure of the Mutual Information calculation, and ran out of time.
+ * • I was unsure of the Mutual Information calculation, and ran out of time - the output comes out has being negative,
+ *   which seems odd. I've taken the magnitude in an attempt to correct this.
  * • The standard deviation calculation isn't perfect, seems much darker compared to your results. This, combined with
  *   the (by default) lack of an SD map for the Isotropic image makes the combined image seem odd. However, I believe
  *   the method used to calculate the combined image to be correct.
@@ -58,14 +60,14 @@ public class AnisotropicSmoothing {
         Image isotropicConvolved = Convolution.convolve(verticalConvolved, horizontalKernel);
         isotropicConvolved.WritePGM("isotropic.pgm");
 //        UNCOMMENT THE BELOW 3 LINES TO ATTEMPT CALCULATION OF SD FOR ISOTROPIC IMAGE - SLOW PROCESS.
-        
+
 //        Image isotropicSD = StandardDeviation.getIsotropicStandardDeviation(isotropicConvolved, (int)sigma);
 //        isotropicSD.WritePGM("isotropicSD.pgm");
 //        mappings.put(isotropicSD, isotropicConvolved);
 
 
         double[][] fdKernel = KernelGenerator.getForwardDiagonal((int) sigma);
-        Image fdConvolved = Convolution.convolve(image, fdKernel);
+        Image fdConvolved = Convolution.convolve(image, fdKernel, true);
         fdConvolved.WritePGM("diagonalF.pgm");
         Image diagonalFSD = StandardDeviation.getForwardDiagonalStandardDeviation(fdConvolved, (int)sigma);
         diagonalFSD.WritePGM("diagonalFSD.pgm");
@@ -148,12 +150,14 @@ public class AnisotropicSmoothing {
         clean.ReadPGM(cleanPath);
 
         double inputRMSE = getRMSE(input, clean);
+        double inputMI = getMI(input, clean);
         System.out.printf("input image RMSE = %s%n", inputRMSE);
-        System.out.printf("input image MI = %s%n", inputRMSE); //Unsure of MI calculation...
+        System.out.printf("input image MI = %s%n", inputMI); //Unsure of MI calculation...
 
         double resultRMSE = getRMSE(input, result);
+        double resultMI = getMI(input, result);
         System.out.printf("result\t RMSE = %s%n", resultRMSE);
-        System.out.printf("result\t image MI = %s%n", resultRMSE);
+        System.out.printf("result\t image MI = %s%n", resultMI);
     }
 
     //Get RMSE between two images
@@ -167,6 +171,76 @@ public class AnisotropicSmoothing {
         }
 
         return Math.sqrt(error/(image1.width * image1.height));
+    }
+
+
+    // Roughly based on:
+    // http://stackoverflow.com/questions/23691398/mutual-information-of-two-images-matlab
+    private static double getMI(Image image1, Image image2){
+        double[][] jointHist = new double[256][256];
+
+        for(int y = 0; y < image1.height; y++){
+            for(int x = 0; x < image1.width; x++){
+                jointHist[image1.pixels[x][y]][image2.pixels[x][y]] += 1;
+            }
+        }
+
+        for(int y = 0; y < image1.height; y++){
+            for(int x = 0; x < image1.width; x++){
+                jointHist[image1.pixels[x][y]][image2.pixels[x][y]] /= (image1.width*image1.height);
+            }
+        }
+
+        double jointEntropy = 0;
+        int nonZeroCount = 0;
+
+        for(int y = 0; y < 256; y++){
+            for(int x = 0; x < 256; x++){
+                if(jointHist[x][y]!=0) {
+                    nonZeroCount += 1;
+                    jointEntropy += jointHist[x][y] * (Math.log(jointHist[x][y]) / Math.log(2));
+                }
+            }
+        }
+
+        jointEntropy *= -1;
+
+        return Math.abs(getEntropy(image1) + getEntropy(image2) - jointEntropy);
+
+
+    }
+
+    private static double getEntropy(Image input){
+        double entropy = 0;
+        int[] image1histogram = getHist(input);
+
+        int nonZeroCount = 0;
+
+        for(int n = 0; n < image1histogram.length; n++){
+            if(image1histogram[n]!=0) {
+                entropy += image1histogram[n] * (Math.log(image1histogram[n]) / Math.log(2));
+                nonZeroCount++;
+            }
+        }
+
+        if (nonZeroCount > 0) {
+            for (int n = 0; n < image1histogram.length; n++) {
+                entropy /= nonZeroCount;
+            }
+        }
+
+        return entropy * -1;
+    }
+
+    private static int[] getHist(Image input){
+        int[] histogram = new int[256];
+
+        for(int y = 0; y < input.height; y++){
+            for(int x = 0; x < input.width; x++){
+                histogram[input.pixels[x][y]] += 1;
+            }
+        }
+        return histogram;
     }
 
 }

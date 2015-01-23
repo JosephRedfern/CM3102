@@ -82,6 +82,7 @@ public class Convolution {
         Image padded = padBoundary(input, kernelHeight, kernelWidth);
 
         if(fileName.length()>0){
+            System.out.println("pigsticks");
             padded.WritePGM(fileName);
         }
 
